@@ -30,42 +30,69 @@ filtered_df = df[(df["Sex"] == gender) & (df["Pclass"] == pclass)]
 st.subheader("Filtered Data Preview")
 st.write(filtered_df.head())
 
-# === Visualizations ===
+# ======= 3×3 Grid Visualizations =======
 
-# 1. Survival Count by Gender
-st.subheader("Survival Count by Gender")
-fig1, ax1 = plt.subplots()
-sns.countplot(data=filtered_df, x="Survived", hue="Sex", ax=ax1)
-st.pyplot(fig1)
+# Row 1
+col1, col2, col3 = st.columns(3)
 
-# 2. Age Distribution by Survival
-with st.expander("📊 Age Distribution by Survival"):
-    fig2, ax2 = plt.subplots()
+with col1:
+    st.markdown("### Survival Count by Gender")
+    fig1, ax1 = plt.subplots(figsize=(5, 3.5))
+    sns.countplot(data=filtered_df, x="Survived", hue="Sex", ax=ax1)
+    st.pyplot(fig1)
+
+with col2:
+    st.markdown("### Age Distribution by Survival")
+    fig2, ax2 = plt.subplots(figsize=(5, 3.5))
     sns.histplot(data=filtered_df, x="Age", hue="Survived", multiple="stack", bins=20, ax=ax2)
     st.pyplot(fig2)
 
-# 3. Survival Rate by Passenger Class
-with st.expander("📈 Survival Rate by Passenger Class"):
-    fig3, ax3 = plt.subplots()
+with col3:
+    st.markdown("### Survival Rate by Passenger Class")
+    fig3, ax3 = plt.subplots(figsize=(5, 3.5))
     sns.barplot(data=df, x="Pclass", y="Survived", estimator=lambda x: sum(x)/len(x), ax=ax3)
     ax3.set_ylabel("Survival Rate")
     st.pyplot(fig3)
 
-# 4. Fare Distribution by Class
-with st.expander("💰 Fare Distribution by Class"):
-    fig4, ax4 = plt.subplots()
+# Row 2
+col4, col5, col6 = st.columns(3)
+
+with col4:
+    st.markdown("### Fare Distribution by Class")
+    fig4, ax4 = plt.subplots(figsize=(5, 3.5))
     sns.boxplot(data=filtered_df, x="Pclass", y="Fare", ax=ax4)
     st.pyplot(fig4)
 
-# 5. Correlation Heatmap
-with st.expander("🔍 Correlation Heatmap"):
+with col5:
+    st.markdown("### Correlation Heatmap")
     corr = df[["Survived", "Pclass", "Age", "SibSp", "Parch", "Fare"]].corr()
-    fig5, ax5 = plt.subplots()
+    fig5, ax5 = plt.subplots(figsize=(5, 3.5))
     sns.heatmap(corr, annot=True, cmap="coolwarm", ax=ax5)
     st.pyplot(fig5)
 
-# 6. Embarked Location Count
-with st.expander("🗺️ Passenger Count by Embarkation Port"):
-    fig6, ax6 = plt.subplots()
+with col6:
+    st.markdown("### Embarked Port Count")
+    fig6, ax6 = plt.subplots(figsize=(5, 3.5))
     sns.countplot(data=filtered_df, x="Embarked", ax=ax6)
     st.pyplot(fig6)
+
+# Row 3
+col7, col8, col9 = st.columns(3)
+
+with col7:
+    st.markdown("### Age vs Fare (Scatter Plot)")
+    fig7, ax7 = plt.subplots(figsize=(5, 3.5))
+    sns.scatterplot(data=filtered_df, x="Age", y="Fare", hue="Survived", ax=ax7)
+    st.pyplot(fig7)
+
+with col8:
+    st.markdown("### Sibling/Spouse Count Distribution")
+    fig8, ax8 = plt.subplots(figsize=(5, 3.5))
+    sns.countplot(data=filtered_df, x="SibSp", ax=ax8)
+    st.pyplot(fig8)
+
+with col9:
+    st.markdown("### Parent/Children Count Distribution")
+    fig9, ax9 = plt.subplots(figsize=(5, 3.5))
+    sns.countplot(data=filtered_df, x="Parch", ax=ax9)
+    st.pyplot(fig9)
