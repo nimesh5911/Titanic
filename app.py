@@ -2,127 +2,121 @@ import streamlit as st
 import pandas as pd
 import matplotlib.pyplot as plt
 import seaborn as sns
+import base64
 
-# --- Page Config ---
+# Load background image and convert to base64
+def set_background(image_file):
+    with open(image_file, "rb") as image:
+        encoded = base64.b64encode(image.read()).decode()
+    css = f"""
+    <style>
+    .stApp {{
+        background-image: url("data:image/jpg;base64,{encoded}");
+        background-size: cover;
+        background-repeat: no-repeat;
+        background-attachment: fixed;
+        background-position: center;
+    }}
+    .block-container {{
+        background-color: rgba(0, 0, 0, 0.75);  /* Dark overlay to improve readability */
+        padding-top: 2rem;
+        padding-bottom: 2rem;
+        border-radius: 10px;
+    }}
+    </style>
+    """
+    st.markdown(css, unsafe_allow_html=True)
+
+# Call background function
+set_background("pic.jpg")
+
+# Set dark theme for charts
+plt.style.use("dark_background")
+sns.set_theme(style="darkgrid")
+
+# Streamlit config
 st.set_page_config(page_title="Titanic EDA Dashboard", layout="wide")
 
-# --- Background Image CSS ---
-page_bg_img = """
-<style>
-[data-testid="stAppViewContainer"] {
-    background-image: url("https://raw.githubusercontent.com/nimesh455/titanic/main/titanic/titanic.jpg");
-    background-size: cover;
-    background-position: center;
-    background-repeat: no-repeat;
-    background-attachment: fixed;
-}
+# Title
+st.title("🚢 Titanic Data Analytics Dashboard")
 
-</style>
-"""
-st.markdown(page_bg_img, unsafe_allow_html=True)
-
-# --- Title ---
-st.markdown("""
-<div style="background-color: rgba(255,255,255,0.8); padding: 10px; border-radius: 10px;">
-    <h1 style="text-align: center;">🚢 Titanic Data Analytics Dashboard</h1>
-</div>
-""", unsafe_allow_html=True)
-
-# --- Load Data ---
+# Load Titanic Data
 df = pd.read_csv("cleaned_titanic.csv")
 
-# --- Sidebar Filters ---
-st.sidebar.header("🔍 Filter Options")
-gender = st.sidebar.selectbox("Select Gender", options=["All"] + list(df["Sex"].unique()))
-pclass = st.sidebar.selectbox("Select Passenger Class", options=["All"] + sorted(df["Pclass"].unique()))
-embarked = st.sidebar.selectbox("Select Embarkation Port", options=["All"] + list(df["Embarked"].dropna().unique()))
-survived = st.sidebar.selectbox("Select Survival Status", options=["All", 0, 1])
-age_slider = st.sidebar.slider("Select Age Range", int(df["Age"].min()), int(df["Age"].max()), (int(df["Age"].min()), int(df["Age"].max())))
+# Sidebar Filters
+st.sidebar.header("🎚 Filter Options")
 
-# --- Apply Filters ---
-filtered_df = df.copy()
+gender = st.sidebar.multiselect("Select Gender", options=df["Sex"].dropna().unique(), default=df["Sex"].dropna().unique())
+pclass = st.sidebar.multiselect("Select Passenger Class", options=sorted(df["Pclass"].dropna().unique()), default=sorted(df["Pclass"].dropna().unique()))
+embarked = st.sidebar.multiselect("Select Embarked Location", options=df["Embarked"].dropna().unique(), default=df["Embarked"].dropna().unique())
+age_range = st.sidebar.slider("Select Age Range", int(df["Age"].min()), int(df["Age"].max()), (int(df["Age"].min()), int(df["Age"].max())))
+fare_range = st.sidebar.slider("Select Fare Range", float(df["Fare"].min()), float(df["Fare"].max()), (float(df["Fare"].min()), float(df["Fare"].max())))
 
-if gender != "All":
-    filtered_df = filtered_df[filtered_df["Sex"] == gender]
+# Apply Filters
+filtered_df = df[
+    (df["Sex"].isin(gender)) &
+    (df["Pclass"].isin(pclass)) &
+    (df["Embarked"].isin(embarked)) &
+    (df["Age"].between(age_range[0], age_range[1])) &
+    (df["Fare"].between(fare_range[0], fare_range[1]))
+]
 
-if pclass != "All":
-    filtered_df = filtered_df[filtered_df["Pclass"] == pclass]
-
-if embarked != "All":
-    filtered_df = filtered_df[filtered_df["Embarked"] == embarked]
-
-if survived != "All":
-    filtered_df = filtered_df[filtered_df["Survived"] == survived]
-
-filtered_df = filtered_df[(filtered_df["Age"] >= age_slider[0]) & (filtered_df["Age"] <= age_slider[1])]
-
-# --- Show Raw Data ---
-if st.checkbox("Show Raw Filtered Data"):
+# Optional Data Display
+if st.checkbox("📂 Show Filtered Raw Data"):
     st.dataframe(filtered_df)
 
-# --- Grid of Visuals (3x3) ---
-st.markdown("## 📊 Visual Analysis")
+st.subheader("📌 Filtered Data Preview")
+st.write(filtered_df.head())
 
 # Row 1
+st.markdown("### 📊 Visual Analysis (Row 1)")
 col1, col2, col3 = st.columns(3)
 
 with col1:
-    st.markdown("### Survival Count by Gender")
-    fig, ax = plt.subplots()
+    st.markdown("#### 🧍‍♂ Survival Count by Gender")
+    fig, ax = plt.subplots(figsize=(5, 4))
     sns.countplot(data=filtered_df, x="Survived", hue="Sex", ax=ax)
+    ax.set_xticklabels(["Not Survived", "Survived"])
     st.pyplot(fig)
 
 with col2:
-    st.markdown("### Age Distribution")
-    fig, ax = plt.subplots()
-    sns.histplot(data=filtered_df, x="Age", bins=20, kde=True, ax=ax)
+    st.markdown("#### 📊 Age Distribution")
+    fig, ax = plt.subplots(figsize=(5, 4))
+    sns.histplot(data=filtered_df, x="Age", bins=30, kde=True, ax=ax)
     st.pyplot(fig)
 
 with col3:
-    st.markdown("### Passenger Class Count")
-    fig, ax = plt.subplots()
-    sns.countplot(data=filtered_df, x="Pclass", hue="Survived", ax=ax)
+    st.markdown("#### 🎓 Survival Rate by Class")
+    fig, ax = plt.subplots(figsize=(5, 4))
+    sns.barplot(data=filtered_df, x="Pclass", y="Survived", hue="Sex", ax=ax)
     st.pyplot(fig)
 
 # Row 2
+st.markdown("### 📈 Visual Analysis (Row 2)")
 col4, col5, col6 = st.columns(3)
 
 with col4:
-    st.markdown("### Fare Distribution")
-    fig, ax = plt.subplots()
-    sns.histplot(data=filtered_df, x="Fare", bins=20, kde=True, ax=ax)
+    st.markdown("#### 💰 Fare Distribution by Class")
+    fig, ax = plt.subplots(figsize=(5, 4))
+    sns.boxplot(data=filtered_df, x="Pclass", y="Fare", ax=ax)
     st.pyplot(fig)
 
 with col5:
-    st.markdown("### Survival by Embarked")
-    fig, ax = plt.subplots()
-    sns.countplot(data=filtered_df, x="Embarked", hue="Survived", ax=ax)
-    st.pyplot(fig)
+    st.markdown("#### 🧠 Correlation Heatmap")
+    numeric_df = filtered_df.select_dtypes(include=['float64', 'int64'])
+    if not numeric_df.empty:
+        fig, ax = plt.subplots(figsize=(5, 4))
+        sns.heatmap(numeric_df.corr(), annot=True, cmap="coolwarm", fmt=".2f", ax=ax)
+        st.pyplot(fig)
+    else:
+        st.warning("No numeric data available to show correlation heatmap.")
 
 with col6:
-    st.markdown("### Gender vs Class")
-    fig, ax = plt.subplots()
-    sns.countplot(data=filtered_df, x="Sex", hue="Pclass", ax=ax)
+    st.markdown("#### 🚉 Embarked Passenger Count")
+    fig, ax = plt.subplots(figsize=(5, 4))
+    sns.countplot(data=filtered_df, x="Embarked", hue="Sex", ax=ax)
     st.pyplot(fig)
 
-# Row 3
-col7, col8, col9 = st.columns(3)
-
-with col7:
-    st.markdown("### Age vs Fare Scatter")
-    fig, ax = plt.subplots()
-    sns.scatterplot(data=filtered_df, x="Age", y="Fare", hue="Survived", ax=ax)
-    st.pyplot(fig)
-
-with col8:
-    st.markdown("### Boxplot: Age by Survival")
-    fig, ax = plt.subplots()
-    sns.boxplot(data=filtered_df, x="Survived", y="Age", ax=ax)
-    st.pyplot(fig)
-
-with col9:
-    st.markdown("### Heatmap: Correlation Matrix")
-    fig, ax = plt.subplots()
-    sns.heatmap(filtered_df.corr(numeric_only=True), annot=True, cmap="coolwarm", ax=ax)
-    st.pyplot(fig)
-
+# Footer
+st.markdown("---")
+st.markdown("*Made with ❤ using Streamlit*", unsafe_allow_html=True)
