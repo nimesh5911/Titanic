@@ -14,10 +14,6 @@ st.title("🚢 Titanic Data Analytics Dashboard")
 # Load Data
 df = pd.read_csv("cleaned_titanic.csv")
 
-# Show Raw Data
-if st.checkbox("Show Raw Data"):
-    st.dataframe(df)
-
 # Sidebar Filters
 st.sidebar.header("🔎 Filter Options")
 
@@ -45,6 +41,10 @@ if survival != "All":
     filtered_df = filtered_df[filtered_df["Survived"] == survival]
 
 filtered_df = filtered_df[(filtered_df["Age"] >= age_range[0]) & (filtered_df["Age"] <= age_range[1])]
+
+# Show Filtered Raw Data
+if st.checkbox("Show Raw Data"):
+    st.dataframe(filtered_df)
 
 # Filtered Data Preview
 st.subheader("Filtered Data Preview")
