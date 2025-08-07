@@ -16,12 +16,7 @@ page_bg_img = """
     background-repeat: no-repeat;
     background-attachment: fixed;
 }
-[data-testid="stSidebar"] {
-    background-color: rgba(255, 255, 255, 0.8);
-}
-[data-testid="stHeader"] {
-    background: rgba(255, 255, 255, 0);
-}
+
 </style>
 """
 st.markdown(page_bg_img, unsafe_allow_html=True)
@@ -130,3 +125,4 @@ with col9:
     fig, ax = plt.subplots()
     sns.heatmap(filtered_df.corr(numeric_only=True), annot=True, cmap="coolwarm", ax=ax)
     st.pyplot(fig)
+
